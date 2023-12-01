@@ -157,6 +157,49 @@ paths:
                           type: string
                           example: "user_id"
 
+  /api/v1/user/social/friends/{user_id:
+    get:
+      tags:
+        - Друзья
+      summary: Просмотр списка друзей пользователя
+      security:
+          - bearerAuth: [ ]
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            example: 1
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы
+          schema:
+            type: integer
+            example: 1
+        - name: per_page
+          in: query
+          required: false
+          description: Количество друзей на странице
+          schema:
+            type: integer
+            example: 10
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessWithPaginationResponse"
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserProfile"
+
   /api/v1/feed/posts/add:
     post:
       tags:
