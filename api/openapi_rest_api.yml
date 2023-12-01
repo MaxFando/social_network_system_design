@@ -46,7 +46,6 @@ paths:
                 user_id:
                   type: integer
                   example: 1
-                  required: true
       responses:
         200:
           description: "Успешный ответ"
@@ -84,22 +83,21 @@ paths:
                           type: string
                           example: "user_id"
 
-  /api/v1/user/social/friends/delete:
+  /api/v1/user/social/friends/{user_id}/delete:
     delete:
       tags:
         - Друзья
       summary: Удаление друга
       security:
         - bearerAuth: [ ]
-      requestBody:
-        content:
-          application/json:
-            schema:
-              properties:
-                user_id:
-                  type: integer
-                  example: 1
-                  required: true
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            example: 1
       responses:
         200:
           description: "Успешный ответ"
@@ -157,13 +155,13 @@ paths:
                           type: string
                           example: "user_id"
 
-  /api/v1/user/social/friends/{user_id:
+  /api/v1/user/social/friends/{user_id}:
     get:
       tags:
         - Друзья
       summary: Просмотр списка друзей пользователя
       security:
-          - bearerAuth: [ ]
+        - bearerAuth: [ ]
       parameters:
         - name: user_id
           in: path
@@ -433,7 +431,6 @@ paths:
                 text:
                   type: string
                   example: "Текст сообщения"
-                  required: true
       responses:
         201:
           description: "Сообщение отправлено"
