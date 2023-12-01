@@ -1,0 +1,637 @@
+openapi: 3.0.1
+info:
+  version: '1.0'
+  title: System Design
+servers:
+  - url: http://localhost/
+    description: Local server
+paths:
+  /api/v1/user/social/profile/{user_id}:
+    get:
+      tags:
+        - Пользователь
+      summary: Просмотр анкеты пользователя
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: Идентификатор пользователя
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  user:
+                    $ref: "#/components/schemas/UserProfile"
+
+  /api/v1/user/social/friends/add:
+    post:
+      tags:
+        - Друзья
+      summary: Добавление друга
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                  required: true
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  message:
+                    type: string
+                    example: "Друг добавлен"
+                  user:
+                    $ref: "#/components/schemas/UserProfile"
+        400:
+          description: "Неверный запрос"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: "INVALID_REQUEST"
+                        message:
+                          type: string
+                          example: "Неверный запрос"
+                        field:
+                          type: string
+                          example: "user_id"
+
+  /api/v1/user/social/friends/delete:
+    delete:
+      tags:
+        - Друзья
+      summary: Удаление друга
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                user_id:
+                  type: integer
+                  example: 1
+                  required: true
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  message:
+                    type: string
+                    example: "Друг удален"
+        400:
+          description: "Неверный запрос"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: "INVALID_REQUEST"
+                        message:
+                          type: string
+                          example: "Неверный запрос"
+                        field:
+                          type: string
+                          example: "user_id"
+        404:
+          description: "Пользователь не найден"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: "USER_NOT_FOUND"
+                        message:
+                          type: string
+                          example: "Пользователь не найден"
+                        field:
+                          type: string
+                          example: "user_id"
+
+  /api/v1/feed/posts/add:
+    post:
+      tags:
+        - Посты
+      summary: Публикация поста в ленту
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Post"
+
+      responses:
+        201:
+          description: "Пост создан"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  post:
+                    $ref: "#/components/schemas/Post"
+        400:
+          description: "Неверный запрос"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ErrorResponse"
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code:
+                          type: string
+                          example: "INVALID_REQUEST"
+                        message:
+                          type: string
+                          example: "Неверный запрос"
+                        field:
+                          type: string
+                          example: "title"
+
+  /api/v1/feed:
+    get:
+      tags:
+        - Новостная лента
+      description: Просмотр ленты постов (*домашней и пользователей)*
+      summary: Просмотр ленты постов
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Тип ленты
+          schema:
+            type: string
+            example: "home"
+            enum:
+              - home
+              - user
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы
+          schema:
+            type: integer
+            example: 1
+        - name: per_page
+          in: query
+          required: false
+          description: Количество постов на странице
+          schema:
+            type: integer
+            example: 10
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessWithPaginationResponse"
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Post"
+
+
+  /api/v1/attachments/add:
+    post:
+      tags:
+        - Вложения
+      summary: Загрузка медиа файлов
+      security:
+        - bearerAuth: [ ]
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        201:
+          description: "Файл загружен"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  attachment:
+                    $ref: "#/components/schemas/Attachment"
+
+  /api/v1/chats:
+    get:
+      tags:
+        - Чаты
+      summary: Просмотр списка чатов
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы
+          schema:
+            type: integer
+            example: 1
+        - name: per_page
+          in: query
+          required: false
+          description: Количество чатов на странице
+          schema:
+            type: integer
+            example: 10
+        - name: type
+          in: query
+          required: false
+          description: Тип чата
+          schema:
+            type: string
+            example: "group"
+            enum:
+              - group
+              - private
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessWithPaginationResponse"
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Chat"
+
+  /api/v1/chats/{chat_id}/messages:
+    get:
+      tags:
+        - Чаты
+      summary: Просмотр списка сообщений в чате
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          description: Идентификатор чата
+          schema:
+            type: integer
+            example: 1
+        - name: page
+          in: query
+          required: false
+          description: Номер страницы
+          schema:
+            type: integer
+            example: 1
+        - name: per_page
+          in: query
+          required: false
+          description: Количество сообщений на странице
+          schema:
+            type: integer
+            example: 10
+      responses:
+        200:
+          description: "Успешный ответ"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessWithCursorPaginationResponse"
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ChatMessage"
+
+    post:
+      tags:
+        - Чаты
+      summary: Отправка сообщения в чат
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          description: Идентификатор чата
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                text:
+                  type: string
+                  example: "Текст сообщения"
+                  required: true
+      responses:
+        201:
+          description: "Сообщение отправлено"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  message:
+                    type: string
+                    example: "Сообщение отправлено"
+                  chat_message:
+                    $ref: "#/components/schemas/ChatMessage"
+
+  /api/v1/chats/{chat_id}/messages/{message_id}:
+    put:
+      tags:
+        - Чаты
+      summary: Отметка сообщения как прочитанного
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - name: chat_id
+          in: path
+          required: true
+          description: Идентификатор чата
+          schema:
+            type: integer
+            example: 1
+        - name: message_id
+          in: path
+          required: true
+          description: Идентификатор сообщения
+          schema:
+            type: integer
+            example: 1
+      responses:
+        200:
+          description: "Сообщение отмечено как прочитанное"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessResponse"
+                properties:
+                  message:
+                    type: string
+                    example: "Сообщение отмечено как прочитанное"
+                  chat_message:
+                    allOf:
+                      - $ref: "#/components/schemas/ChatMessage"
+                    properties:
+                      is_read:
+                        type: boolean
+                        example: true
+                        description: true, если сообщение прочитано
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Имя"
+        age:
+          type: integer
+          example: 18
+        is_friend:
+          type: boolean
+          example: false
+          description: true, если пользователь в друзьях
+
+    Attachment:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        url:
+          type: string
+          example: "http://localhost:8000/media/attachments/2021/08/09/1.jpg"
+        type:
+          type: string
+          example: "image"
+          description: image, video, audio
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          readOnly: true
+        title:
+          type: string
+          example: "Заголовок поста"
+        text:
+          type: string
+          example: "Текст поста"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+
+    ChatMessage:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        text:
+          type: string
+          example: "Текст сообщения"
+        created_at:
+          type: string
+          format: date-time
+          example: "2021-01-01T00:00:00+00:00"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2021-01-01T00:00:00+00:00"
+        chat_id:
+          type: integer
+          example: 1
+        is_read:
+          type: boolean
+          example: false
+          description: true, если сообщение прочитано
+
+    Chat:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Название чата"
+        type:
+          type: string
+          example: "group"
+          description: group, private
+          enum:
+            - group
+            - private
+        created_at:
+          type: string
+          format: date-time
+          example: "2021-01-01T00:00:00+00:00"
+
+    SuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+          description: ok, request was successful
+        message:
+          type: string
+          description: message with details about request
+
+    SuccessWithPaginationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+          description: ok, request was successful
+        message:
+          type: string
+          description: message with details about request
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+              example: 1
+            per_page:
+              type: integer
+              example: 10
+            total:
+              type: integer
+              example: 100
+            pages:
+              type: integer
+              example: 10
+
+    SuccessWithCursorPaginationResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+          description: ok, request was successful
+        message:
+          type: string
+          description: message with details about request
+        pagination:
+          type: object
+          properties:
+            current:
+              type: string
+              example: "http://localhost:8000/api/v1/feed?cursor=2"
+            next:
+              type: string
+              example: "http://localhost:8000/api/v1/feed?cursor=3"
+            previous:
+              type: string
+              example: "http://localhost:8000/api/v1/feed?cursor=1"
+            per_page:
+              type: integer
+              example: 10
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          description: error, request was not successful
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: string
+                description: error code
+              message:
+                type: string
+                description: error message
+              field:
+                type: string
+                description: field name
